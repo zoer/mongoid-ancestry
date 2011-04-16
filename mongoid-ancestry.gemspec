@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{mongoid-ancestry}
-  s.version = "0.0.0"
+  s.version = "0.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Stefan Kroes", "Anton Orel"]
@@ -13,14 +13,29 @@ Gem::Specification.new do |s|
   s.description = %q{Organise Mongoid model into a tree structure}
   s.email = %q{eagle.anton@gmail.com}
   s.extra_rdoc_files = [
-    "README.rdoc"
+    "README.md"
   ]
   s.files = [
+    "Gemfile",
+    "Gemfile.lock",
+    "Guardfile",
     "MIT-LICENSE",
-    "README.rdoc",
+    "README.md",
     "Rakefile",
+    "VERSION",
     "init.rb",
-    "install.rb"
+    "install.rb",
+    "lib/mongoid/ancestry.rb",
+    "lib/mongoid/ancestry/class_methods.rb",
+    "lib/mongoid/ancestry/exceptions.rb",
+    "lib/mongoid/ancestry/instance_methods.rb",
+    "log/.gitkeep",
+    "mongoid-ancestry.gemspec",
+    "spec/mongoid/ancestry/class_methods_spec.rb",
+    "spec/mongoid/ancestry/instance_methods_spec.rb",
+    "spec/mongoid/ancestry_spec.rb",
+    "spec/spec_helper.rb",
+    "spec/support/models.rb"
   ]
   s.homepage = %q{http://github.com/skyeagle/mongoid-ancestry}
   s.licenses = ["MIT"]
@@ -46,6 +61,12 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<libnotify>, ["~> 0.3"])
       s.add_development_dependency(%q<rb-inotify>, ["~> 0.8"])
       s.add_development_dependency(%q<fuubar>, ["~> 0.0.4"])
+      s.add_development_dependency(%q<rspec>, ["~> 2.5"])
+      s.add_development_dependency(%q<bundler>, ["~> 1.0"])
+      s.add_development_dependency(%q<guard-rspec>, ["~> 0.2"])
+      s.add_development_dependency(%q<libnotify>, ["~> 0.3"])
+      s.add_development_dependency(%q<rb-inotify>, ["~> 0.8"])
+      s.add_development_dependency(%q<fuubar>, ["~> 0.0.4"])
       s.add_runtime_dependency(%q<mongoid>, ["~> 2.0"])
       s.add_runtime_dependency(%q<bson_ext>, ["~> 1.3"])
       s.add_development_dependency(%q<rspec>, ["~> 2.5"])
@@ -56,6 +77,12 @@ Gem::Specification.new do |s|
       s.add_development_dependency(%q<fuubar>, ["~> 0.0.4"])
     else
       s.add_dependency(%q<mongoid-ancestry>, [">= 0"])
+      s.add_dependency(%q<rspec>, ["~> 2.5"])
+      s.add_dependency(%q<bundler>, ["~> 1.0"])
+      s.add_dependency(%q<guard-rspec>, ["~> 0.2"])
+      s.add_dependency(%q<libnotify>, ["~> 0.3"])
+      s.add_dependency(%q<rb-inotify>, ["~> 0.8"])
+      s.add_dependency(%q<fuubar>, ["~> 0.0.4"])
       s.add_dependency(%q<rspec>, ["~> 2.5"])
       s.add_dependency(%q<bundler>, ["~> 1.0"])
       s.add_dependency(%q<guard-rspec>, ["~> 0.2"])
@@ -73,6 +100,12 @@ Gem::Specification.new do |s|
     end
   else
     s.add_dependency(%q<mongoid-ancestry>, [">= 0"])
+    s.add_dependency(%q<rspec>, ["~> 2.5"])
+    s.add_dependency(%q<bundler>, ["~> 1.0"])
+    s.add_dependency(%q<guard-rspec>, ["~> 0.2"])
+    s.add_dependency(%q<libnotify>, ["~> 0.3"])
+    s.add_dependency(%q<rb-inotify>, ["~> 0.8"])
+    s.add_dependency(%q<fuubar>, ["~> 0.0.4"])
     s.add_dependency(%q<rspec>, ["~> 2.5"])
     s.add_dependency(%q<bundler>, ["~> 1.0"])
     s.add_dependency(%q<guard-rspec>, ["~> 0.2"])
