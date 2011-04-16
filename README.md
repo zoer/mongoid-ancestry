@@ -16,8 +16,8 @@ To apply Mongoid-ancestry to any Mongoid model, follow these simple steps:
 
 2. Add ancestry to your model
 
-    include Mongoid::Ancestry
-    has_ancestry
+        include Mongoid::Ancestry
+        has_ancestry
 
 Your model is now a tree!
 
@@ -166,8 +166,8 @@ With Mongoid-ancestry its easy to migrate from any of these plugins, to do so, u
   * See 'Installation' for more info on installing and configuring gem
   * Add to app/models/[model].rb:
 
-  include Mongoid::Ancestry
-  has_ancestry
+            include Mongoid::Ancestry
+            has_ancestry
 
   * Create indexes
 
