@@ -3,27 +3,26 @@ Mongoid-ancestry
 
 Mongoid-ancestry is a gem/plugin that allows the records of a Ruby on Rails Mongoid model to be organised as a tree structure (or hierarchy). It uses a single, intuitively formatted database column, using a variation on the materialised path pattern. It exposes all the standard tree structure relations (ancestors, parent, root, children, siblings, descendants) and all of them can be fetched in a single query. Additional features are STI support, scopes, depth caching, depth constraints, easy migration from older plugins/gems, integrity checking, integrity restoration, arrangement of (sub)tree into hashes and different strategies for dealing with orphaned records.
 
-Installation
-------------
+## Installation
 
-## It's Rails 3 only.
+### It's Rails 3 only.
 
 To apply Mongoid-ancestry to any Mongoid model, follow these simple steps:
 
 1. Install
-Add to Gemfile: `gem 'ancestry'`
-Install required gems: `bundle install`
+
+  * Add to Gemfile: `gem 'ancestry'`
+  * Install required gems: `bundle install`
 
 2. Add ancestry to your model
-Add to app/models/[model].rb:
 
-     include Mongoid::Ancestry
-     has_ancestry
+    include Mongoid::Ancestry
+    has_ancestry
 
 Your model is now a tree!
 
-= Organising records into a tree
-By default MongoDB provide records with an unique id which can't be use to order their. Therefore, Mongoid-Ancestry
+## Organising records into a tree
+By default MongoDB provide records with an unique id which can't be use to order their. Therefore, Mongoid-ancestry
 adds to the all records of your's model an autoincremented unique id(by default `uid` attribute). You can use the parent
 attribute to organise your records into a tree. For these purposes you should use `uid` attribute. You have already had
 the `uid` of the record and you want to use it as a parent and don't want to fetch it, you can use parent_id. Like any
@@ -36,7 +35,7 @@ or
 
     TreeNode.create :name => 'Stinky', :parent_id => TreeNode.create(:name => 'Squeeky').uid
 
-### Note: It doesn't work with `.create!` at the moment(mongoid bug? needs more investigation). But it absolutely will be fixed.
+#### Note: It doesn't work with `.create!` at the moment(mongoid bug? needs more investigation). But it absolutely will be fixed.
 
 
 You can also create children through the children relation on a node:
@@ -85,7 +84,7 @@ The has_ancestry methods supports the following options:
                            - Build cache: TreeNode.rebuild_depth_cache!
     :depth_cache_field     Pass in a symbol to store depth cache in a different field
 
-## (Named) Scopes
+## Scopes
 
 Where possible, the navigation methods return scopes instead of records, this means additional ordering, conditions, limits, etc. can be applied and that the result can be either retrieved, counted or checked for existence. For example:
 
@@ -164,13 +163,13 @@ The arrange method takes Mongoid find options. If you want your hashes to be ord
 With Mongoid-ancestry its easy to migrate from any of these plugins, to do so, use the build_ancestry_from_parent_ids! method on your model. These steps provide a more detailed explanation:
 
 1. Remove old tree plugin or gem and add in Mongoid-ancestry
-See 'Installation' for more info on installing and configuring gem
-Add to app/models/[model].rb:
+  * See 'Installation' for more info on installing and configuring gem
+  * Add to app/models/[model].rb:
 
-     include Mongoid::Ancestry
-     has_ancestry
+  include Mongoid::Ancestry
+  has_ancestry
 
-Create indexes
+  * Create indexes
 
 2. Change your code
 Most tree calls will probably work fine with ancestry
@@ -220,6 +219,6 @@ It's a fork of [original ancestry](https://github.com/stefankroes/ancestry) gem 
 
 All thanks should goes to Stefan Kroes for his great work.
 
-Bug report? Faulty/incomplete documentation? Feature request? Please post an issue on 'http://github.com/skyeagle/mongoid-ancestry/issues'.
+Bug report? Faulty/incomplete documentation? Feature request? Please post an issue on [issues tracker](http://github.com/skyeagle/mongoid-ancestry/issues).
 
 Copyright (c) 2009 Stefan Kroes, released under the MIT license
