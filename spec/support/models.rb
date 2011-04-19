@@ -28,7 +28,6 @@ class MongoidAncestry
         yield TestNode
       end
     ensure
-      #Mongoid.master.collections.reject { |c| c.name =~ /^system\./ }.each(&:drop)
       remove_const "TestNode"
     end
   end

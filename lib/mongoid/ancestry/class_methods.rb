@@ -3,14 +3,13 @@ module Mongoid
     module ClassMethods
       def has_ancestry(opts = {})
         defaults = {
-          :uid_field         => :uid,
           :ancestry_field    => :ancestry,
           :cache_depth       => false,
           :depth_cache_field => :ancestry_depth,
           :orphan_strategy   => :destroy
         }
 
-        valid_opts = [:uid_field, :ancestry_field, :cache_depth, :depth_cache_field, :orphan_strategy]
+        valid_opts = [:ancestry_field, :cache_depth, :depth_cache_field, :orphan_strategy]
         unless opts.is_a?(Hash) &&  opts.keys.all? {|opt| valid_opts.include?(opt) }
           raise Error.new("Invalid options for has_ancestry. Only hash is allowed.\n Defaults: #{defaults.inspect}")
         end
@@ -18,13 +17,6 @@ module Mongoid
         opts.symbolize_keys!
 
         opts.reverse_merge!(defaults)
-
-        cattr_accessor :uid_field
-        self.uid_field = opts[:uid_field]
-
-        # Create unique id field accessor and set to option or default
-        self.field uid_field, :type => Integer
-        self.index uid_field, :unique => true
 
         # Create ancestry field accessor and set to option or default
         cattr_accessor :ancestry_field
@@ -38,7 +30,7 @@ module Mongoid
         self.orphan_strategy = opts[:orphan_strategy]
 
         # Validate format of ancestry column value
-        primary_key_format = opts[:primary_key_format] || /[0-9]+/
+        primary_key_format = opts[:primary_key_format] || /[a-z0-9]+/
         validates_format_of ancestry_field, :with => /\A#{primary_key_format.source}(\/#{primary_key_format.source})*\Z/, :allow_nil => true
 
         # Validate that the ancestor ids don't include own id
@@ -74,17 +66,11 @@ module Mongoid
         scope :ordered_by_ancestry, asc(:"#{self.base_class.ancestry_field}")
         scope :ordered_by_ancestry_and, lambda {|by| ordered_by_ancestry.order_by([by]) }
 
-        before_create :set_uid
-
         # Update descendants with new ancestry before save
         before_save :update_descendants_with_new_ancestry
 
         # Apply orphan strategy before destroy
         before_destroy :apply_orphan_strategy
-      end
-
-      def find_by_uid!(uid)
-        where(self.base_class.uid_field => uid).first || raise(Mongoid::Errors::DocumentNotFound.new(self, uid))
       end
 
       # Fetch tree node if necessary
@@ -128,7 +114,7 @@ module Mongoid
           node.ancestor_ids.inject(arranged_nodes) do |insertion_point, ancestor_id|
             insertion_point.each do |parent, children|
               # Change the insertion point to children if node is a descendant of this parent
-              insertion_point = children if ancestor_id == parent.read_attribute(self.base_class.uid_field)
+              insertion_point = children if ancestor_id == parent.id
             end; insertion_point
           end[node] = ActiveSupport::OrderedHash.new; arranged_nodes
         end
@@ -143,19 +129,19 @@ module Mongoid
           begin
             # ... check validity of ancestry column
             if !node.valid? and !node.errors[node.class.ancestry_field].blank?
-              raise IntegrityError.new "Invalid format for ancestry column of node #{node.read_attribute node.uid_field}: #{node.read_attribute node.ancestry_field}."
+              raise IntegrityError.new "Invalid format for ancestry column of node #{node.id}: #{node.read_attribute node.ancestry_field}."
             end
             # ... check that all ancestors exist
             node.ancestor_ids.each do |ancestor_id|
-              unless where(:uid => ancestor_id).first
-                raise IntegrityError.new "Reference to non-existent node in node #{node.read_attribute node.uid_field}: #{ancestor_id}."
+              unless where(:_id => ancestor_id).first
+                raise IntegrityError.new "Reference to non-existent node in node #{node.id}: #{ancestor_id}."
               end
             end
             # ... check that all node parents are consistent with values observed earlier
             node.path_ids.zip([nil] + node.path_ids).each do |node_id, parent_id|
               parents[node_id] = parent_id unless parents.has_key? node_id
               unless parents[node_id] == parent_id
-                raise IntegrityError.new "Conflicting parent id found in node #{node.read_attribute node.uid_field}: #{parent_id || 'nil'} for node #{node_id} while expecting #{parents[node_id] || 'nil'}"
+                raise IntegrityError.new "Conflicting parent id found in node #{node.id}: #{parent_id || 'nil'} for node #{node_id} while expecting #{parents[node_id] || 'nil'}"
               end
             end
           rescue IntegrityError => integrity_exception
@@ -181,19 +167,19 @@ module Mongoid
             end
           end
           # ... save parent of this node in parents array if it exists
-          parents[node.read_attribute(node.uid_field)] = node.parent_id if exists? node.parent_id
+          parents[node.id] = node.parent_id if exists? node.parent_id
 
           # Reset parent id in array to nil if it introduces a cycle
-          parent = parents[node.read_attribute(node.uid_field)]
-          until parent.nil? || parent == node.read_attribute(node.uid_field)
+          parent = parents[node.id]
+          until parent.nil? || parent == node.id
             parent = parents[parent]
           end
-          parents[node.read_attribute(node.uid_field)] = nil if parent == node.read_attribute(node.uid_field)
+          parents[node.id] = nil if parent == node.id
         end
         # For each node ...
         self.base_class.all.each do |node|
           # ... rebuild ancestry from parents array
-          ancestry, parent = nil, parents[node.read_attribute(node.uid_field)]
+          ancestry, parent = nil, parents[node.id]
           until parent.nil?
             ancestry, parent = if ancestry.nil? then parent else "#{parent}/#{ancestry}" end, parents[parent]
           end
@@ -207,17 +193,10 @@ module Mongoid
       def build_ancestry_from_parent_ids! parent_id = nil, ancestry = nil
         self.base_class.where(:parent_id => parent_id).all.each do |node|
           node.without_ancestry_callbacks do
-            retries = 3
-            begin
-              node.set_uid
-              node.send(:"#{ancestry_field}=", ancestry)
-              node.save!
-            rescue Mongo::OperationFailure => e
-              (retries -= 1) > 0 && e.to_s =~ %r{duplicate key error.+\$#{self.base_class.uid_field}} ? retry : raise(e)
-            end
+            node.update_attribute(self.base_class.ancestry_field, ancestry)
           end
           build_ancestry_from_parent_ids! node.id,
-            if ancestry.nil? then "#{node.read_attribute(self.base_class.uid_field)}" else "#{ancestry}/#{node.read_attribute(self.base_class.uid_field)}" end
+            if ancestry.nil? then node.id.to_s else "#{ancestry}/#{node.id}" end
         end
       end
 

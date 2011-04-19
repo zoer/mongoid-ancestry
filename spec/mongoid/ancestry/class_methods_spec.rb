@@ -31,7 +31,7 @@ describe MongoidAncestry do
 
   it "should be arranged" do
     subject.with_model :depth => 3, :width => 3 do |model, roots|
-      id_sorter = Proc.new do |a, b|; a.uid <=> b.uid; end
+      id_sorter = Proc.new {|a, b|; a.to_param <=> b.to_param }
       arranged_nodes = model.arrange
       arranged_nodes.size.should eql(3)
       arranged_nodes.each do |node, children|
@@ -48,8 +48,8 @@ describe MongoidAncestry do
 
   it "should have arrange order option" do
     subject.with_model :width => 3, :depth => 3 do |model, roots|
-      descending_nodes_lvl0 = model.arrange :order => [:uid, :desc]
-      ascending_nodes_lvl0 = model.arrange :order => [:uid, :asc]
+      descending_nodes_lvl0 = model.arrange :order => [:_id, :desc]
+      ascending_nodes_lvl0 = model.arrange :order => [:_id, :asc]
 
       descending_nodes_lvl0.keys.zip(ascending_nodes_lvl0.keys.reverse).each do |descending_node, ascending_node|
         ascending_node.should eql(descending_node)
@@ -105,14 +105,6 @@ describe MongoidAncestry do
     end
   end
 
-  it "should find record by uid" do
-    subject.with_model do |model|
-      expect { model.find_by_uid!(1)}.to raise_error(Mongoid::Errors::DocumentNotFound)
-      instance = model.create!
-      expect { model.find_by_uid!(1).should eql(instance)}.to_not raise_error(Mongoid::Errors::DocumentNotFound)
-    end
-  end
-
   it "should check that there are no errors on a valid tree" do
     subject.with_model :width => 3, :depth => 3 do |model, roots|
       expect { model.check_ancestry_integrity! }.to_not raise_error(Mongoid::Ancestry::Error)
@@ -130,7 +122,10 @@ describe MongoidAncestry do
 
   it "should check detection of non-existent ancestor" do
     subject.with_model :width => 3, :depth => 3 do |model, roots|
-      roots.first.first.update_attribute model.ancestry_field, 35
+      node = roots.first.first
+      node.without_ancestry_callbacks do
+       node.update_attribute model.ancestry_field, 35
+      end
       expect { model.check_ancestry_integrity! }.to raise_error(Mongoid::Ancestry::IntegrityError)
       model.check_ancestry_integrity!(:report => :list).size.should eql(1)
     end
@@ -139,7 +134,7 @@ describe MongoidAncestry do
   it "should check detection of cyclic ancestry" do
     subject.with_model :width => 3, :depth => 3 do |model, roots|
       node = roots.first.first
-      node.update_attribute model.ancestry_field, node.uid
+      node.update_attribute model.ancestry_field, node.id
       expect { model.check_ancestry_integrity! }.to raise_error(Mongoid::Ancestry::IntegrityError)
       model.check_ancestry_integrity!(:report => :list).size.should eql(1)
     end
@@ -148,7 +143,7 @@ describe MongoidAncestry do
   it "should check detection of conflicting parent id" do
     subject.with_model do |model|
       model.destroy_all
-      model.create!(model.ancestry_field => model.create!(model.ancestry_field => model.create!(model.ancestry_field => nil).uid).uid)
+      model.create!(model.ancestry_field => model.create!(model.ancestry_field => model.create!(model.ancestry_field => nil).id).id)
       expect { model.check_ancestry_integrity! }.to raise_error(Mongoid::Ancestry::IntegrityError)
       model.check_ancestry_integrity!(:report => :list).size.should eql(1)
     end
@@ -177,7 +172,7 @@ describe MongoidAncestry do
   it "should check that integrity is restored for cyclic ancestry" do
     subject.with_model :width => 3, :depth => 3 do |model, roots|
       node = roots.first.first
-      node.update_attribute model.ancestry_field, node.uid
+      node.update_attribute model.ancestry_field, node.id
       assert_integrity_restoration model
     end
   end
@@ -185,7 +180,7 @@ describe MongoidAncestry do
   it "should check that integrity is restored for conflicting parent id" do
     subject.with_model do |model|
       model.destroy_all
-      model.create!(model.ancestry_field => model.create!(model.ancestry_field => model.create!(model.ancestry_field => nil).uid).uid)
+      model.create!(model.ancestry_field => model.create!(model.ancestry_field => model.create!(model.ancestry_field => nil).id).id)
       assert_integrity_restoration model
     end
   end

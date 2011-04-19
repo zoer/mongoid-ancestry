@@ -22,18 +22,16 @@ To apply Mongoid-ancestry to any Mongoid model, follow these simple steps:
 Your model is now a tree!
 
 ## Organising records into a tree
-By default MongoDB provide records with an unique id which can't be use to order their. Therefore, Mongoid-ancestry
-adds to the all records of your's model an autoincremented unique id(by default `uid` attribute). You can use the parent
-attribute to organise your records into a tree. For these purposes you should use `uid` attribute. You have already had
-the `uid` of the record and you want to use it as a parent and don't want to fetch it, you can use parent_id. Like any
-virtual model attributes, parent and parent_id can be set using parent= and parent_id= on a record or by including them
-in the hash passed to new, create, create!, update_attributes and update_attributes!. For example:
+You can use the parent attribute to organise your records into a tree. If you have the id of the record you want
+to use as a parent and don't want to fetch it, you can also use parent_id. Like any virtual model attributes,
+parent and parent_id can be set using parent= and parent_id= on a record or by including them in the hash passed
+to new, create, create!, update_attributes and update_attributes!. For example:
 
     TreeNode.create :name => 'Stinky', :parent => TreeNode.create(:name => 'Squeeky')
 
 or
 
-    TreeNode.create :name => 'Stinky', :parent_id => TreeNode.create(:name => 'Squeeky').uid
+    TreeNode.create :name => 'Stinky', :parent_id => TreeNode.create(:name => 'Squeeky').id
 
 #### Note: It doesn't work with `.create!` at the moment(mongoid bug? needs more investigation). But it absolutely will be fixed.
 
@@ -74,7 +72,6 @@ To navigate an Ancestry model, use the following methods on any instance / recor
 The has_ancestry methods supports the following options:
 
     :ancestry_field        Pass in a symbol to store ancestry in a different field
-    :uid_field             Pass in a symbol to store unique id in a different field
     :orphan_strategy       Instruct Ancestry what to do with children of a node that is destroyed:
                            :destroy   All children are destroyed as well (default)
                            :rootify   The children of the destroyed node become root nodes

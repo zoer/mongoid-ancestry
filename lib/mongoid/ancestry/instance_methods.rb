@@ -1,26 +1,9 @@
 module Mongoid
   module Ancestry
     module InstanceMethods
-      def save!(opts = {})
-        opts.merge!(:safe => true)
-        retries = 3
-        begin
-          super(opts)
-        rescue Mongo::OperationFailure => e
-          (retries -= 1) > 0 && e.to_s =~ %r{duplicate key error.+\$#{self.base_class.uid_field}} ? retry : raise(e)
-        end
-      end
-      alias_method :save, :save!
-
-      def set_uid
-        previous = self.class.desc(:"#{self.base_class.uid_field}").first
-        uniq_id = previous ? previous.read_attribute(:"#{uid_field}").to_i + 1 : 1
-        send :"#{uid_field}=", uniq_id
-      end
-
       # Validate that the ancestors don't include itself
       def ancestry_exclude_self
-        if ancestor_ids.include? read_attribute(self.base_class.uid_field)
+        if ancestor_ids.include? id
           errors.add(:base, "#{self.class.name.humanize} cannot be a descendant of itself.")
         end
       end
@@ -37,9 +20,9 @@ module Mongoid
               descendant.without_ancestry_callbacks do
                 for_replace = \
                   if read_attribute(self.class.ancestry_field).blank?
-                    read_attribute(self.base_class.uid_field).to_s
+                    id.to_s
                   else
-                    "#{read_attribute self.class.ancestry_field }/#{uid}"
+                    "#{read_attribute self.class.ancestry_field}/#{id}"
                   end
                 new_ancestry = descendant.read_attribute(descendant.class.ancestry_field).gsub(/^#{self.child_ancestry}/, for_replace)
                 descendant.update_attribute(self.base_class.ancestry_field, new_ancestry)
@@ -85,19 +68,19 @@ module Mongoid
         raise Error.new('No child ancestry for new record. Save record before performing tree operations.') if new_record?
 
         if self.send("#{self.base_class.ancestry_field}_was").blank?
-          read_attribute(self.base_class.uid_field).to_s
+          id.to_s
         else
-          "#{self.send "#{self.base_class.ancestry_field}_was"}/#{read_attribute(self.base_class.uid_field)}"
+          "#{self.send "#{self.base_class.ancestry_field}_was"}/#{id}"
         end
       end
 
       # Ancestors
       def ancestor_ids
-        read_attribute(self.base_class.ancestry_field).to_s.split('/').map{ |uid| uid.to_i }
+        read_attribute(self.base_class.ancestry_field).to_s.split('/').map { |id| cast_primary_key(id) }
       end
 
       def ancestor_conditions
-        {self.base_class.uid_field.in => ancestor_ids}
+        { :_id.in => ancestor_ids }
       end
 
       def ancestors depth_options = {}
@@ -105,11 +88,11 @@ module Mongoid
       end
 
       def path_ids
-        ancestor_ids + [read_attribute(self.base_class.uid_field)]
+        ancestor_ids + [id]
       end
 
       def path_conditions
-        {self.base_class.uid_field.in => path_ids}
+        { :_id.in => path_ids }
       end
 
       def path depth_options = {}
@@ -130,7 +113,7 @@ module Mongoid
       end
 
       def parent_id= parent_id
-        self.parent = parent_id.blank? ? nil : self.base_class.find_by_uid!(parent_id)
+        self.parent = parent_id.blank? ? nil : self.base_class.find(parent_id)
       end
 
       def parent_id
@@ -138,16 +121,16 @@ module Mongoid
       end
 
       def parent
-        parent_id.blank? ? nil : self.base_class.find_by_uid!(parent_id)
+        parent_id.blank? ? nil : self.base_class.find(parent_id)
       end
 
       # Root
       def root_id
-        ancestor_ids.empty? ? read_attribute(self.base_class.uid_field) : ancestor_ids.first
+        ancestor_ids.empty? ? id : ancestor_ids.first
       end
 
       def root
-        (root_id == read_attribute(self.base_class.uid_field)) ? self : self.base_class.find_by_uid!(root_id)
+        (root_id == id) ? self : self.base_class.find(root_id)
       end
 
       def is_root?
@@ -164,7 +147,7 @@ module Mongoid
       end
 
       def child_ids
-        children.only(self.base_class.uid_field).all.map(&self.base_class.uid_field)
+        children.only(:_id).map(&:id)
       end
 
       def has_children?
@@ -185,7 +168,7 @@ module Mongoid
       end
 
       def sibling_ids
-        siblings.only(self.base_class.uid_field).all.collect(&self.base_class.uid_field)
+        siblings.only(:_id).map(&:id)
       end
 
       def has_siblings?
@@ -198,7 +181,6 @@ module Mongoid
 
       # Descendants
       def descendant_conditions
-        #["#{self.base_class.ancestry_field} like ? or #{self.base_class.ancestry_column} = ?", "#{child_ancestry}/%", child_ancestry]
         [
           { self.base_class.ancestry_field => /^#{child_ancestry}\// },
           { self.base_class.ancestry_field => child_ancestry }
@@ -210,17 +192,16 @@ module Mongoid
       end
 
       def descendant_ids depth_options = {}
-        descendants(depth_options).only(self.base_class.uid_field).collect(&self.base_class.uid_field)
+        descendants(depth_options).only(:_id).map(&:id)
       end
 
       # Subtree
       def subtree_conditions
-        #["#{self.base_class.primary_key} = ? or #{self.base_class.ancestry_column} like ? or #{self.base_class.ancestry_column} = ?", self.id, "#{child_ancestry}/%", child_ancestry]
-          [
-            { self.base_class.uid_field => read_attribute(self.base_class.uid_field) },
-            { self.base_class.ancestry_field => /^#{child_ancestry}\// },
-            { self.base_class.ancestry_field => child_ancestry }
-          ]
+        [
+          { :_id => id },
+          { self.base_class.ancestry_field => /^#{child_ancestry}\// },
+          { self.base_class.ancestry_field => child_ancestry }
+        ]
       end
 
       def subtree depth_options = {}
@@ -228,7 +209,7 @@ module Mongoid
       end
 
       def subtree_ids depth_options = {}
-        subtree(depth_options).select(self.base_class.uid_field).all.collect(&self.base_class.uid_field)
+        subtree(depth_options).only(:_id).map(&:id)
       end
 
       # Callback disabling
@@ -240,6 +221,22 @@ module Mongoid
 
       def ancestry_callbacks_disabled?
         !!@disable_ancestry_callbacks
+      end
+
+      private
+
+      def cast_primary_key(key)
+        if primary_key_type == Integer
+          key.to_i
+        elsif primary_key_type == BSON::ObjectId && key =~ /[a-z0-9]{24}/
+          BSON::ObjectId.convert(self, key)
+        else
+          key
+        end
+      end
+
+      def primary_key_type
+        @primary_key_type ||= self.base_class.fields['_id'].options[:type]
       end
     end
   end

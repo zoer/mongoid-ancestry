@@ -10,13 +10,6 @@ describe MongoidAncestry do
   it "should have ancestry fields" do
     subject.with_model do |model|
       model.fields['ancestry'].options[:type].should eql(String)
-      model.fields['uid'].options[:type].should eql(Integer)
-    end
-  end
-
-  it "should have ancestry indexes" do
-    subject.with_model do |model|
-      model.index_options.should have_key(:uid)
     end
   end
 
