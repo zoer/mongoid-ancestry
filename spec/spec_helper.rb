@@ -4,6 +4,8 @@ require 'bundler/setup'
 require 'mongoid'
 require 'rspec'
 
+require 'mongoid-ancestry'
+
 Mongoid.configure do |config|
   logger = Logger.new('log/test.log')
   config.master = Mongo::Connection.new('localhost', 27017,

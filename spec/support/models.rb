@@ -1,6 +1,3 @@
-require 'mongoid/ancestry'
-
-
 class MongoidAncestry
 
   def self.with_model options = {}

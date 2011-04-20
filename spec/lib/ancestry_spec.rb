@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-require 'mongoid/ancestry/exceptions'
+require 'mongoid-ancestry/exceptions'
 
 
 describe MongoidAncestry do
