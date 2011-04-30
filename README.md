@@ -23,9 +23,9 @@ Your model is now a tree!
 
 ## Organising records into a tree
 You can use the parent attribute to organise your records into a tree. If you have the id of the record you want
-to use as a parent and don't want to fetch it, you can also use parent_id. Like any virtual model attributes,
-parent and parent_id can be set using parent= and parent_id= on a record or by including them in the hash passed
-to new, create, create!, update_attributes and update_attributes!. For example:
+to use as a parent and don't want to fetch it, you can also use `parent_id`. Like any virtual model attributes,
+parent and `parent_id` can be set using `parent=` and `parent_id=` on a record or by including them in the hash passed
+to new, create, create!, `update_attributes` and `update_attributes!`. For example:
 
     TreeNode.create :name => 'Stinky', :parent => TreeNode.create(:name => 'Squeeky')
 
@@ -69,15 +69,18 @@ To navigate an Ancestry model, use the following methods on any instance / recor
 
 ## Options for has_ancestry
 
-The has_ancestry methods supports the following options:
+The `has_ancestry` methods supports the following options:
 
     :ancestry_field        Pass in a symbol to store ancestry in a different field
     :orphan_strategy       Instruct Ancestry what to do with children of a node that is destroyed:
                            :destroy   All children are destroyed as well (default)
                            :rootify   The children of the destroyed node become root nodes
                            :restrict  An Error is raised if any children exist
-    :cache_depth           Cache the depth of each node in the 'ancestry_depth' field (default: false)
+    :cache_depth           Cache the depth of each node in the `ancestry_depth` field (default: false)
                            If you turn depth_caching on for an existing model:
+                           - Mongoid has default configuration attribute `allow_dynamic_fields` as `true`.
+                           You should manually add this depth field with `Integer` type and `0` as default value
+                           into your model if `allow_dynamic_fields` is disabled in your configuration.
                            - Build cache: TreeNode.rebuild_depth_cache!
     :depth_cache_field     Pass in a symbol to store depth cache in a different field
 
@@ -107,7 +110,7 @@ Thanks to some convenient rails magic, it is even possible to create nodes throu
 
 ## Selecting nodes by depth
 
-When depth caching is enabled (see has_ancestry options), five more named scopes can be used to select nodes on their depth:
+When depth caching is enabled (see `has_ancestry` options), five more named scopes can be used to select nodes on their depth:
 
     before_depth(depth)     Return nodes that are less deep than depth (node.depth < depth)
     to_depth(depth)         Return nodes up to a certain depth (node.depth <= depth)
@@ -115,7 +118,7 @@ When depth caching is enabled (see has_ancestry options), five more named scopes
     from_depth(depth)       Return nodes starting from a certain depth (node.depth >= depth)
     after_depth(depth)      Return nodes that are deeper than depth (node.depth > depth)
 
-The depth scopes are also available through calls to descendants, descendant_ids, subtree, subtree_ids, path and ancestors. In this case, depth values are interpreted relatively. Some examples:
+The depth scopes are also available through calls to `descendants`, `descendant_ids`, `subtree`, `subtree_ids`, `path` and `ancestors`. In this case, depth values are interpreted relatively. Some examples:
 
     node.subtree(:to_depth => 2)      Subtree of node, to a depth of node.depth + 2 (self, children and grandchildren)
     node.subtree.to_depth(5)          Subtree of node to an absolute depth of 5
@@ -129,7 +132,10 @@ The depth scopes are also available through calls to descendants, descendant_ids
     node.descendants(:from_depth => 2, :to_depth => 4)
     node.subtree.from_depth(10).to_depth(12)
 
-Please note that depth constraints cannot be passed to ancestor_ids and path_ids. The reason for this is that both these relations can be fetched directly from the ancestry column without performing a database query. It would require an entirely different method of applying the depth constraints which isn't worth the effort of implementing. You can use ancestors(depth_options).map(&:id) or ancestor_ids.slice(min_depth..max_depth) instead.
+Please note that depth constraints cannot be passed to `ancestor_ids` and `path_ids`. The reason for this is that
+both these relations can be fetched directly from the ancestry column without performing a database query. It would
+require an entirely different method of applying the depth constraints which isn't worth the effort of implementing.
+You can use `ancestors(depth_options).map(&:id)` or `ancestor_ids.slice(min_depth..max_depth)` instead.
 
 ## STI support
 
@@ -157,11 +163,11 @@ The arrange method takes Mongoid find options. If you want your hashes to be ord
 
 ## Migrating from plugin that uses parent_id column
 
-With Mongoid-ancestry its easy to migrate from any of these plugins, to do so, use the build_ancestry_from_parent_ids! method on your model. These steps provide a more detailed explanation:
+With Mongoid-ancestry its easy to migrate from any of these plugins, to do so, use the `Model.build_ancestry_from_parent_ids!` method on your model. These steps provide a more detailed explanation:
 
 1. Remove old tree plugin or gem and add in Mongoid-ancestry
   * See 'Installation' for more info on installing and configuring gem
-  * Add to app/models/[model].rb:
+  * Add to app/models/model.rb:
 
             include Mongoid::Ancestry
             has_ancestry
@@ -173,13 +179,13 @@ Most tree calls will probably work fine with ancestry
 Others must be changed or proxied
 Check if all your data is intact and all tests pass
 
-3. Drop parent_id field
+3. Drop `parent_id` field
 
 ## Integrity checking and restoration
 
-I don't see any way Mongoid-ancestry tree integrity could get compromised without explicitly setting cyclic parents or invalid ancestry and circumventing validation with update_attribute, if you do, please let me know.
+I don't see any way Mongoid-ancestry tree integrity could get compromised without explicitly setting cyclic parents or invalid ancestry and circumventing validation with `update_attribute`, if you do, please let me know.
 
-Mongoid-ancestry includes some methods for detecting integrity problems and restoring integrity just to be sure. To check integrity use: [Model].check_ancestry_integrity!. An Mongoid::Ancestry::Error will be raised if there are any problems. You can also specify :report => :list to return an array of exceptions or :report => :echo to echo any error messages. To restore integrity use: [Model].restore_ancestry_integrity!.
+Mongoid-ancestry includes some methods for detecting integrity problems and restoring integrity just to be sure. To check integrity use: `Model.check_ancestry_integrity!`. An Mongoid::Ancestry::Error will be raised if there are any problems. You can also specify `:report => :list` to return an array of exceptions or `:report => :echo` to echo any error messages. To restore integrity use: `Model.restore_ancestry_integrity!`.
 
 For example, from IRB:
 
@@ -202,13 +208,13 @@ Additionally, if you think something is wrong with your depth cache:
 
 ## Tests
 
-The Mongoid-ancestry gem comes with rspec and guard(for automatically specs running) suite consisting of about 40 specs. It takes about 10 seconds to run. To run it yourself check out the repository from GitHub, run `bundle install`, run `guard` and press `Ctrl+\` or just `rake spec`.
+The Mongoid-ancestry gem comes with rspec and guard(for automatically specs running) suite consisting of about 40 specs. It takes about 10 seconds to run. To run it yourself check out the repository from GitHub, run `bundle install`, run `guard` and press `Ctrl+\ ` or just `rake spec`.
 
 ## Internals
 
 As can be seen in the previous section, Mongoid-ancestry stores a path from the root to the parent for every node. This is a variation on the materialised path database pattern. It allows to fetch any relation (siblings, descendants, etc.) in a single query without the complicated algorithms and incomprehensibility associated with left and right values. Additionally, any inserts, deletes and updates only affect nodes within the affected node's own subtree.
 
-The materialised path pattern requires Mongoid-ancestry to use a 'regexp' condition in order to fetch descendants. This should not be particularly slow however since the the condition never starts with a wildcard which allows the DBMS to use the column index. If you have any data on performance with a large number of records, please drop me line.
+The materialised path pattern requires Mongoid-ancestry to use a `regexp` condition in order to fetch descendants. This should not be particularly slow however since the the condition never starts with a wildcard which allows the DBMS to use the column index. If you have any data on performance with a large number of records, please drop me line.
 
 ## Contact and copyright
 
