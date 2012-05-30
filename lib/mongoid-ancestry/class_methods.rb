@@ -167,7 +167,7 @@ module Mongoid
             end
           end
           # ... save parent of this node in parents array if it exists
-          parents[node.id] = node.parent_id if exists? node.parent_id
+          parents[node.id] = node.parent_id if where(:_id => node.parent_id).first
 
           # Reset parent id in array to nil if it introduces a cycle
           parent = parents[node.id]
