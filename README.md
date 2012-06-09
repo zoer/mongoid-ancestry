@@ -226,7 +226,7 @@ The materialised path pattern requires Mongoid-ancestry to use a `regexp` condit
 
 ## Contact and copyright
 
-It's a fork of [original ancestry](https://github.com/stefankroes/ancestry) gem but adopted to work with Mongoid.
+It's a fork of [original ancestry](https://github.com/stefankroes/ancestry) gem but adapted to work with Mongoid.
 
 All thanks should goes to Stefan Kroes for his great work.
 
