@@ -71,7 +71,7 @@ describe MongoidAncestry do
       end
     end
   end
-  
+
   it "should have valid orphan rootify strategy" do
     subject.with_model :depth => 3, :width => 3 do |model, roots|
       model.orphan_strategy = :rootify
@@ -232,7 +232,7 @@ describe MongoidAncestry do
   end
 
   it "should build ancestry from parent ids" do
-    subject.with_model :skip_ancestry => true, :extra_columns => {:parent_id => 'BSON::ObjectId'} do |model|
+    subject.with_model :skip_ancestry => true, :extra_columns => {:parent_id => 'Moped::BSON::ObjectId'} do |model|
       [model.create!].each do |parent1|
         (Array.new(5) { model.create :parent_id => parent1.id }).each do |parent2|
           (Array.new(5) { model.create :parent_id => parent2.id }).each do |parent3|
