@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    mongoid-ancestry (0.3.0)
+    mongoid-ancestry (0.3.1)
       mongoid (~> 3.0)
 
 GEM
