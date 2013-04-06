@@ -74,6 +74,10 @@ module Mongoid
         # Update descendants with new ancestry before save
         before_save :update_descendants_with_new_ancestry
 
+        before_save :touch_parent, if: lambda { |obj|
+          obj.touchable && obj.send(:"#{self.class.ancestry_field}_changed?")
+        }
+
         # Apply orphan strategy before destroy
         before_destroy :apply_orphan_strategy
       end

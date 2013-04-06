@@ -161,7 +161,7 @@ describe MongoidAncestry do
     end
   end
 
-  it "should have depth caching" do 
+  it "should have depth caching" do
     subject.with_model :depth => 3, :width => 3, :cache_depth => true, :depth_cache_field => :depth_cache do |model, roots|
       roots.each do |lvl0_node, lvl0_children|
         lvl0_node.depth_cache.should eql(0)
@@ -237,16 +237,18 @@ describe MongoidAncestry do
     end
   end
 
-  it "should call touch on parent" do
-    # Mongoid::Document.should_receive(:touch)
-
-    subject.with_model touchable: true do |model|
+  it "should not call touch on parent" do
+    subject.with_model do |model|
       root = model.create!
-      lambda {
-        root.children.create!
-      }.should change(root, :updated_at)
+      expect{ root.children.create!  }.to_not change{ root.reload.updated_at }
     end
   end
 
+  it "should call touch on parent" do
+    subject.with_model touchable: true do |model|
+      root = model.create!
+      expect{ root.children.create!  }.to change{ root.reload.updated_at }
+    end
+  end
 
 end

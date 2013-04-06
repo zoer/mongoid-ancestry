@@ -32,6 +32,10 @@ module Mongoid
       end
     end
 
+    def touch_parent
+      parent.touch
+    end
+
     # Apply orphan strategy
     def apply_orphan_strategy
       # Skip this if callbacks are disabled
@@ -110,7 +114,6 @@ module Mongoid
     # Parent
     def parent= parent
       write_attribute(self.base_class.ancestry_field, parent.blank? ? nil : parent.child_ancestry)
-      parent.touch if parent.respond_to?(:touchable)
     end
 
     def parent_id= parent_id

@@ -8,6 +8,9 @@ require 'mongoid-ancestry'
 
 Mongoid.load!(File.expand_path('../mongoid.yml', __FILE__), 'test')
 Mongoid.logger = Logger.new('log/test.log')
+Moped.logger = Logger.new('log/test.log')
+Mongoid.logger.level = Logger::DEBUG
+Moped.logger.level = Logger::DEBUG
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each {|f| require f}
 
