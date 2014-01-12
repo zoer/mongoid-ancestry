@@ -62,13 +62,13 @@ module Mongoid
           }
         end
 
-        scope :roots, where(ancestry_field => nil)
+        scope :roots, ->{where(ancestry_field => nil)}
         scope :ancestors_of, lambda { |object| where(to_node(object).ancestor_conditions) }
         scope :children_of, lambda { |object| where(to_node(object).child_conditions) }
         scope :descendants_of, lambda { |object| any_of(to_node(object).descendant_conditions) }
         scope :subtree_of, lambda { |object| any_of(to_node(object).subtree_conditions) }
         scope :siblings_of, lambda { |object| where(to_node(object).sibling_conditions) }
-        scope :ordered_by_ancestry, asc(:"#{self.base_class.ancestry_field}")
+        scope :ordered_by_ancestry, ->{asc(:"#{self.base_class.ancestry_field}")}
         scope :ordered_by_ancestry_and, lambda {|by| ordered_by_ancestry.order_by([by]) }
 
         # Update descendants with new ancestry before save
